@@ -20,7 +20,7 @@ infix 1 _∨_
 infix 0 _⇔_
 
 
--- 0ur Sets will be called denoted by 𝓢. This is
+-- 0ur Sets will be denoted by 𝓢. This is
 -- our universe of discourse. Membership of set
 -- is also a primitive notion. That letter is
 -- written by "\MCS"
@@ -90,7 +90,7 @@ data ∃ (A : 𝓢 → Set) : Set where
 
 syntax ∃ (λ x → e) = ∃[ x ] e
 
--- Existential projection.
+-- Existential projections.
 
 proj₁ : {A : 𝓢 → Set} → ∃ A → 𝓢
 proj₁ (t , _) = t
@@ -143,7 +143,6 @@ x ⊂' y = x ⊆ y ∧ ∃ (λ z → z ∈ y ∧ z ∉ x)
 -- they are equal.  empt (Empty Set Axiom) : There is a set having no
 -- members.
 
-
 -- pair (Pairing Axiom) : For any sets y and z, there is a set having
 -- as members just y and z.
 
@@ -160,24 +159,19 @@ x ⊂' y = x ⊆ y ∧ ∃ (λ z → z ∈ y ∧ z ∉ x)
 -- The other three axioms are yet to implement.
 
 postulate
+  empt : ∃ (λ B → ∀ x → x ∉ B)
   ext  : (x y : 𝓢) → ∀ {z} → z ∈ x ⇔ z ∈ y → x ≡ y
   union : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → z ∈ B ⇔ z ∈ x ∨ z ∈ y)
   pair : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → z ∈ B ⇔ (z ≡ x ∨ z ≡ y))
   pow : (x : 𝓢) → ∃ (λ B → ∀ {y} → y ∈ B ⇔ y ⊆ x)
   sub  : (A : 𝓢 → Set) → (y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ (z ∈ y ∧ A z)))
-{-# ATP axioms ext union #-}
+{-# ATP axioms empt ext union pair pow #-}
 
-  -- uni  : ∀ {z} → (∃ A : 𝓢) → ∀ {y x} → x ∈ y ∧ y ∈ z → x ∈ A
-------------------------------------------
+-- sub not given to apia since it is an axiom schema and ATPs don't deal
+-- with that.
 
--- Pairs, singletons.
 
--- singleton : 𝓢 → 𝓢
--- singleton x = x ₚ x
-
-postulate
-  empt : ∃ (λ B → ∀ x → x ∉ B)
-{-# ATP axioms empt #-}
+-- Basic Properties involving membership, and subsets.
 
 ∅ : 𝓢
 ∅ = proj₁ empt
@@ -186,23 +180,11 @@ postulate
 notInEmpty : ∀ x → x ∉ ∅
 notInEmpty x h  = (proj₂ _ empt) x h
 
--- I am having troubles proving this theorem (unique-∅).
--- The left hand side of the implication is easily provable,
--- but the right side is not. I tried seeing if apia could prove it,
--- but it couldn't either.
-
--- postulate unique-∅ : (x y : 𝓢) → ((x ∉ y) ⇔ y ≡ ∅)
--- {-# ATP prove unique-∅ #-}
-
 subsetOfItself : ∀ {x} → x ⊆ x
 subsetOfItself _ t∈x = t∈x
 
 equalitySubset :  (x y : 𝓢) → x ⊆ y ∧ y ⊆ x → x ≡ y
 equalitySubset x y (x⊆y , y⊆x) = ext x y ((x⊆y x) , (y⊆x x))
-
--- This theorem depends on the proof of unique-∅ so I didn't prove it.
--- postulate subsetOf-∅ : (x :  𝓢) (p : x ⊆ ∅) → x ≡ ∅
--- {-# ATP prove subsetOf-∅ #-}
 
 trans-⊆ : (x y z : 𝓢) → x ⊆ y ∧ y ⊆ z → x ⊆ z
 trans-⊆ x y z (x⊆y , y⊆z) t t∈x = y⊆z t (x⊆y t t∈x)
@@ -215,6 +197,11 @@ nonSymmetry-⊂ x y (x⊆y , x≢y) (y⊆x , _) = x≢y (equalitySubset x y (x�
 
 ⊂→⊆ : ∀ {x y} → x ⊂ y → x ⊆ y
 ⊂→⊆ (x⊆y , _) z z∈x = x⊆y z z∈x
+
+-- Properties involving operations between sets, algebra of sets.
+
+-- First, some properties of the union between sets, justified by the
+-- union axiom.
 
 _∪_ : 𝓢 → 𝓢 → 𝓢
 x ∪ y = proj₁ (union x y)
@@ -245,6 +232,9 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   p₂ : (x : 𝓢) → x ∈ A → x ∈ (A ∪ A)
   p₂ x x₁ = ∪-d₂ A A (inj₁ x₁)
 
+-- Properties about the intersection opertaion. Its existence is justified
+-- as an axiom derived from the sub axiom schema.
+
 _∩_ : 𝓢 → 𝓢 → 𝓢
 x ∩ y = proj₁ (sub (λ z → z ∈ y) x)
 
@@ -253,15 +243,6 @@ sub₂ x y = sub (λ z → z ∈ y) x
 
 ∩-def : (x y : 𝓢) → ∀ {z} → z ∈ x ∩ y ⇔ z ∈ x ∧ z ∈ y
 ∩-def x y = proj₂ _ (sub₂ x y)
-
-sub₃ : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ z ∈ x ∧ z ∉ y))
-sub₃ x y = sub (λ z → z ∉ y) x
-
-_-_ : 𝓢 → 𝓢 → 𝓢
-x - y = proj₁ (sub₃ x y)
-
-dif-def : (x y : 𝓢) → ∀ {z} → z ∈ (x - y) ⇔ z ∈ x ∧ z ∉ y
-dif-def x y = proj₂ _ (sub₃ x y)
 
 ∩-d₁ : (x A B : 𝓢)  → x ∈ (A ∩ B) → x ∈ A ∧ x ∈ B
 ∩-d₁ x A B = ∧-proj₁ (∩-def A B)
@@ -336,6 +317,18 @@ dif-def x y = proj₂ _ (sub₃ x y)
 A∩B⊆A : (A B : 𝓢) → A ∩ B ⊆ A
 A∩B⊆A A B _ p = ∧-proj₁ (∩-d₁ _ A _ p)
 
+-- Properties involving the difference between sets. The existence of this
+-- sets is also justified as an instance of the subset axiom schema.
+
+sub₃ : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ z ∈ x ∧ z ∉ y))
+sub₃ x y = sub (λ z → z ∉ y) x
+
+_-_ : 𝓢 → 𝓢 → 𝓢
+x - y = proj₁ (sub₃ x y)
+
+dif-def : (x y : 𝓢) → ∀ {z} → z ∈ (x - y) ⇔ z ∈ x ∧ z ∉ y
+dif-def x y = proj₂ _ (sub₃ x y)
+
 dif-d₁ : (A B z : 𝓢) → z ∈ A - B → z ∈ A ∧ z ∉ B
 dif-d₁ A B z = ∧-proj₁ (dif-def A B)
 
@@ -357,7 +350,7 @@ dif-d₂ A B z = ∧-proj₂ (dif-def A B)
   p₂ : (x : 𝓢) → x ∈ A - B → x ∈ A ∩ (A - B)
   p₂ x x∈A-B = ∩-d₂ x A (A - B) ((∧-proj₁ (dif-d₁ A B x x∈A-B)) , x∈A-B)
 
--- Pairs
+-- Pairs, justified by the pair axiom
 
 _ₚ_ : 𝓢 → 𝓢 → 𝓢
 x ₚ y = proj₁ (pair x y)
@@ -385,8 +378,6 @@ singletonp₂ x = pair-d₂ x x (inj₁ refl)
 _ₒ_ : 𝓢 → 𝓢 → 𝓢
 x ₒ y = x ₚ (x ₚ y)
 
--- Power Set
-
 𝓟_ : 𝓢 → 𝓢
 𝓟 x = proj₁ (pow x)
 
@@ -395,3 +386,6 @@ x ₒ y = x ₚ (x ₚ y)
 -- Suppes, Patrick (1960). Axiomatic Set Theory.
 -- The University Series in Undergraduate Mathematics.
 -- D. Van Nostrand Company, inc.
+--
+-- Enderton, Herbert B. (1977). Elements of Set Theory.
+-- Academic Press Inc. 
