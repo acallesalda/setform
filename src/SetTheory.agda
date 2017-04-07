@@ -14,11 +14,10 @@ infix 5 _∈_ _∉_
 infix 4 _≡_
 infix 4 _,_
 infix 3 ¬_
-infix 2 _∧_
-infix 2 ∃
+infix 1 _∧_
+infix 1 ∃
 infix 1 _∨_
 infix 0 _⇔_
-
 
 -- 0ur Sets will be denoted by 𝓢. This is
 -- our universe of discourse. Membership of set
@@ -43,7 +42,7 @@ data _∧_ (A B : Set) : Set where
 ∧-proj₂ : ∀ {A B} → A ∧ B → B
 ∧-proj₂ (_ , b) = b
 
--- ∨ data type (disjunction).
+-- ∨ data type (disjunction), with many useful properties.
 
 data _∨_ (A B : Set) : Set where
   inj₁ : A → A ∨ B
@@ -63,6 +62,20 @@ trivial _ A = A
 ∨-idem : (A : Set) → A ∨ A → A
 ∨-idem A (inj₁ a) = a
 ∨-idem A (inj₂ a) = a
+
+∨-prop₁ : {A B C : Set} → (A ∨ B → C) → A → C
+∨-prop₁ i a = i (inj₁ a)
+
+∨-prop₂ : {A B C : Set} → (A ∨ B → C) → B → C
+∨-prop₂ i b = i (inj₂ b)
+
+∨-prop₃ : {A B C : Set} → A ∨ B → (A → C) → C ∨ B
+∨-prop₃ (inj₁ x) i = inj₁ (i x)
+∨-prop₃ (inj₂ x) i = inj₂ x
+
+∨-prop₄ : {A B C : Set} → A ∨ B → (B → C) → A ∨ C
+∨-prop₄ (inj₁ x) x₁ = inj₁ x
+∨-prop₄ (inj₂ x) x₁ = inj₂ (x₁ x)
 
 -- Bi-implication.
 
@@ -100,7 +113,7 @@ proj₂ A (_ , Ax) = Ax
 
 -------------------------------------------
 
--- Equivalence and non equivalence
+-- Equivalence and non equivalence with some useful properties
 
 data _≡_ (x : 𝓢) : 𝓢 → Set where
   refl : x ≡ x
@@ -133,7 +146,6 @@ x ⊂ y = x ⊆ y ∧ x ≢ y
 _⊂'_ : 𝓢 → 𝓢 → Set
 x ⊂' y = x ⊆ y ∧ ∃ (λ z → z ∈ y ∧ z ∉ x)
 
-
 -------------------------------------------
 
 -- ZFC's axioms
@@ -156,6 +168,9 @@ x ⊂' y = x ⊆ y ∧ ∃ (λ z → z ∈ y ∧ z ∉ x)
 -- uni (Union Axiom) : For any set x, there exists a set A whose
 -- elements are exactly the members of x.
 
+-- pem (Principle of the excluded middle) : To prove some things
+-- not valid in intuitionistic logic and valid in classical logic.
+
 -- The other three axioms are yet to implement.
 
 postulate
@@ -165,17 +180,26 @@ postulate
   pair : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → z ∈ B ⇔ (z ≡ x ∨ z ≡ y))
   pow : (x : 𝓢) → ∃ (λ B → ∀ {y} → y ∈ B ⇔ y ⊆ x)
   sub  : (A : 𝓢 → Set) → (y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ (z ∈ y ∧ A z)))
+  pem : (A : Set) → A ∨ ¬ A
 {-# ATP axioms empt ext union pair pow #-}
 
 -- sub not given to apia since it is an axiom schema and ATPs don't deal
 -- with that.
 
+-- pem isn't given either since ATP's use classical logic so it uses
+-- this principle by default.
 
 -- Basic Properties involving membership, and subsets.
 
 ∅ : 𝓢
 ∅ = proj₁ empt
 {-# ATP definition ∅ #-}
+
+cont : (A : Set) → A ∧ ¬ A → ⊥
+cont _ (x , ¬x) = ¬x x
+
+memberEq : (x y z : 𝓢) → x ∈ y ∧ y ≡ z → x ∈ z
+memberEq x y z (x₁ , x₂) = subs _ x₂ x₁
 
 notInEmpty : ∀ x → x ∉ ∅
 notInEmpty x h  = (proj₂ _ empt) x h
@@ -231,6 +255,16 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   p₁ x x₁ = ∨-idem _ (∪-d₁ A A x₁)
   p₂ : (x : 𝓢) → x ∈ A → x ∈ (A ∪ A)
   p₂ x x₁ = ∪-d₂ A A (inj₁ x₁)
+
+∪-prop : (A B : 𝓢) → A ⊆ A ∪ B
+∪-prop A B t x = ∪-d₂ _ _ (inj₁ x)
+
+⊆∪ : (x A B : 𝓢) → x ⊆ A ∧ x ⊆ B → x ⊆ A ∪ B
+⊆∪ x A B (x₁ , x₂) t x₃ = trans-⊆ _ _ _ (x₁ , (∪-prop _ _)) _ x₃
+
+∪-prop₂ : (x A B : 𝓢) → x ⊆ A ∨ x ⊆ B → x ⊆ A ∪ B
+∪-prop₂ x A B (inj₁ x₁) t x₂ = ∪-d₂ _ _ (inj₁ (x₁ _ x₂))
+∪-prop₂ x A B (inj₂ x₁) t x₂ = ∪-d₂ _ _ (inj₂ (x₁ _ x₂))
 
 -- Properties about the intersection opertaion. Its existence is justified
 -- as an axiom derived from the sub axiom schema.
@@ -364,6 +398,14 @@ pair-d₁ x y = ∧-proj₁ (pair-d x y)
 pair-d₂ : (x y : 𝓢) → ∀ {z} → (z ≡ x ∨ z ≡ y) → z ∈ x ₚ y
 pair-d₂ x y = ∧-proj₂ (pair-d x y)
 
+pair-p₁ : (x y : 𝓢) → x ₚ y ≡ y ₚ x
+pair-p₁ x y = equalitySubset (x ₚ y) (y ₚ x) (p₁ , p₂)
+  where
+  p₁ : (z : 𝓢) → z ∈ x ₚ y → z ∈ y ₚ x
+  p₁ z z∈x,y = pair-d₂ y x (∨-sym _ _ (pair-d₁ x y z∈x,y))
+  p₂ : (z : 𝓢) → z ∈ y ₚ x → z ∈ x ₚ y
+  p₂ z z∈y,x = pair-d₂ x y (∨-sym _ _ (pair-d₁ y x z∈y,x))
+
 singleton : 𝓢 → 𝓢
 singleton x = x ₚ x
 
@@ -373,13 +415,114 @@ singletonp x x₁ = ∨-idem _ (pair-d₁ x x x₁)
 singletonp₂ : (x : 𝓢) → x ∈ singleton x
 singletonp₂ x = pair-d₂ x x (inj₁ refl)
 
+pair-prop : (x y u v : 𝓢) → x ₚ y ≡ u ₚ v → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+pair-prop x y u v eq = ∨-e _ _ _ (pem (x ≡ y)) h-x≡y h-x≢y
+  where
+  u∈u,v : u ∈ (u ₚ v)
+  u∈u,v = ∨-prop₁ (pair-d₂ u v) refl
+  u∈x,y : u ∈ (x ₚ y)
+  u∈x,y = memberEq u (u ₚ v) (x ₚ y) (u∈u,v , (sym _ _ eq))
+  disj₁ : u ≡ x ∨ u ≡ y
+  disj₁ = pair-d₁ _ _ u∈x,y
+  v∈u,v : v ∈ (u ₚ v)
+  v∈u,v = ∨-prop₂ (pair-d₂ u v) refl
+  v∈x,y : v ∈ (x ₚ y)
+  v∈x,y = memberEq v (u ₚ v) (x ₚ y) (v∈u,v , (sym _ _ eq))
+  disj₂ : v ≡ x ∨ v ≡ y
+  disj₂ = pair-d₁ _ _ v∈x,y
+  x∈x,y : x ∈ (x ₚ y)
+  x∈x,y = ∨-prop₁ (pair-d₂ x y) refl
+  x∈u,v : x ∈ (u ₚ v)
+  x∈u,v = memberEq x (x ₚ y) (u ₚ v) (x∈x,y , eq)
+  disj₃ : x ≡ u ∨ x ≡ v
+  disj₃ = pair-d₁ _ _ x∈u,v
+  y∈x,y : y ∈ (x ₚ y)
+  y∈x,y = ∨-prop₂ (pair-d₂ x y) refl
+  y∈u,v : y ∈ (u ₚ v)
+  y∈u,v = memberEq y (x ₚ y) (u ₚ v) (y∈x,y , eq)
+  disj₄ : y ≡ u ∨ y ≡ v
+  disj₄ = pair-d₁ _ _ y∈u,v
+  h-x≡y : x ≡ y → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+  h-x≡y eq₂ = inj₁ (x≡u , v≡y)
+    where
+    x≡u : u ≡ x
+    x≡u = ∨-idem _ disj-aux
+      where
+      disj-aux : u ≡ x ∨ u ≡ x
+      disj-aux = subs _ (sym _ _ eq₂) disj₁
+    v≡y : v ≡ y
+    v≡y = ∨-idem _ disj-aux
+      where
+      disj-aux : v ≡ y ∨ v ≡ y
+      disj-aux = subs _ eq₂ disj₂
+  h-x≢y : x ≢ y → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+  -- Suppes negates u ≡ x and obtains v ≡ x ∧ u ≡ y. Then
+  -- he negates u ≡ y and obtains u ≡ x ∧ v ≡ y. He uses then
+  -- a weird rule of logic like this:
+  -- (¬ A → C ∧ D) → (¬ D → A ∧ B) → ((A ∧ B) ∨ (C ∧ D))
+  -- Is that a rule of logic? I don't understand his reasoning
+  h-x≢y ¬eq = {!!}
+
 -- Ordered pairs
+
+-- To prove things about ordered pairs I have to prove first
+-- pair-prop.
 
 _ₒ_ : 𝓢 → 𝓢 → 𝓢
 x ₒ y = x ₚ (x ₚ y)
 
+-- Power sets
+
 𝓟_ : 𝓢 → 𝓢
 𝓟 x = proj₁ (pow x)
+
+𝓟-d : (x : 𝓢) → ∀ {z} → z ∈ (𝓟 x) ⇔ z ⊆ x
+𝓟-d x = proj₂ _ (pow x)
+
+𝓟-d₁ : (x : 𝓢) → ∀ {z} → z ∈ (𝓟 x) → z ⊆ x
+𝓟-d₁ _ = ∧-proj₁ (𝓟-d _)
+
+𝓟-d₂ : (x : 𝓢) → ∀ {z} → z ⊆ x → z ∈ (𝓟 x)
+𝓟-d₂ _ = ∧-proj₂ (𝓟-d _)
+
+A∈𝓟A : (A : 𝓢) → A ∈ 𝓟 A
+A∈𝓟A A = 𝓟-d₂ A subsetOfItself
+
+⊆𝓟 : (A B : 𝓢) → A ⊆ B ⇔ 𝓟 A ⊆ 𝓟 B
+⊆𝓟 A B = iₗ , iᵣ
+  where
+  iₗ : A ⊆ B → 𝓟 A ⊆ 𝓟 B
+  iₗ A⊆B t t∈𝓟A = 𝓟-d₂ _ t⊆B
+    where
+     t⊆A : t ⊆ A
+     t⊆A = 𝓟-d₁ A t∈𝓟A
+     t⊆B : t ⊆ B
+     t⊆B = trans-⊆ _ _ _ (t⊆A , A⊆B)
+  iᵣ : 𝓟 A ⊆ 𝓟 B → A ⊆ B
+  iᵣ 𝓟A⊆𝓟B t t∈A = 𝓟-d₁ _ A∈𝓟B _ t∈A
+    where
+    A∈𝓟B : A ∈ 𝓟 B
+    A∈𝓟B = 𝓟A⊆𝓟B _ (A∈𝓟A _)
+
+𝓟∪ : (A B : 𝓢) → (𝓟 A) ∪ (𝓟 B) ⊆ 𝓟 (A ∪ B)
+𝓟∪ A B t t∈𝓟A∪𝓟B = 𝓟-d₂ _ t⊆A∪B
+  where
+  ∪₁ : t ∈ 𝓟 A ∨ t ∈ 𝓟 B
+  ∪₁ = ∪-d₁ _ _ t∈𝓟A∪𝓟B
+  p : t ⊆ A ∨ t ⊆ B
+  p = ∨-prop₄ aux₁ (𝓟-d₁ _)
+    where
+    aux₁ : t ⊆ A ∨ t ∈ 𝓟 B
+    aux₁ = ∨-prop₃ ∪₁ (𝓟-d₁ _)
+  t⊆A∪B : t ⊆ A ∪ B
+  t⊆A∪B = ∪-prop₂ _ _ _ p
+
+-- Cartesian Product. Suppes define it by using some weird
+-- instantiation of the subset axiom. I don't really understand
+-- his reasoning so translating it is a bit difficult.
+
+_X_ : 𝓢 → 𝓢 → 𝓢
+A X B = {!!}
 
 -- References
 --
@@ -388,4 +531,4 @@ x ₒ y = x ₚ (x ₚ y)
 -- D. Van Nostrand Company, inc.
 --
 -- Enderton, Herbert B. (1977). Elements of Set Theory.
--- Academic Press Inc. 
+-- Academic Press Inc.
