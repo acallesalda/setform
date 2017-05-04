@@ -425,6 +425,7 @@ pair-prop-helper₁ (inj₂ refl) _ = refl
 pair-prop-helper₂ : {a b : 𝓢} → a ≢ b → b ≢ a
 pair-prop-helper₂ h b≡a = h (sym _ _ b≡a)
 
+-- Theorem 44, p. 31 (Suppes, 1972).
 pair-prop : (x y u v : 𝓢) → x ₚ y ≡ u ₚ v → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
 pair-prop x y u v eq = ∨-e _ _ _ (pem (x ≡ y)) h-x≡y h-x≢y
   where
@@ -564,9 +565,11 @@ A X B = {!!}
 
 -- References
 --
--- Suppes, Patrick (1960). Axiomatic Set Theory.
--- The University Series in Undergraduate Mathematics.
--- D. Van Nostrand Company, inc.
+-- Enderton, Herbert B. (1977). Elements of Set Theory.  Academic
+-- Press Inc.
 --
--- Enderton, Herbert B. (1977). Elements of Set Theory.
--- Academic Press Inc.
+-- Suppes, Patrick (1960). Axiomatic Set Theory.  The University
+-- Series in Undergraduate Mathematics.  D. Van Nostrand Company, Inc.
+--
+-- Suppes, Patrick (1972). Axiomatic Set Theory.  Dover Publications,
+-- Inc.
