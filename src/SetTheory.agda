@@ -105,6 +105,9 @@ data ⊤ : Set where
 ¬_ : Set → Set
 ¬ A = A → ⊥
 
+cont : (A : Set) → A ∧ ¬ A → ⊥
+cont _ (x , ¬x) = ¬x x
+
 -- Existential quantifier
 
 data ∃ (A : 𝓢 → Set) : Set where
@@ -144,6 +147,7 @@ subs P {x} {.x} refl h = h
 trans : {x y z : 𝓢} → x ≡ y →  y ≡ z → x ≡ z
 trans refl refl = refl
 
+-- Property concerning bi-implication, needed in a proof.
 ⇔-p₂ : (z : 𝓢) → {A B C : Set} →  A ⇔ (B ∧ C) → (C → B) → A ⇔ C
 ⇔-p₂ z (a→b∧c , b∧c→a) c→b = (λ a → ∧-proj₂ (a→b∧c a)) , (λ c → b∧c→a ((c→b c) , c))
 
@@ -168,26 +172,35 @@ x ⊂' y = x ⊆ y ∧ ∃ (λ z → z ∈ y ∧ z ∉ x)
 -- From (Suppes 1960, p. 56)
 
 -- ext (Extensionality) : If two sets have exactly the same members,
--- they are equal.  empt (Empty Set Axiom) : There is a set having no
--- members.
+-- they are equal.
+
+-- empt (Empty Set Axiom) : There is a set having no
+-- members. Allows us to define the empty set.
 
 -- pair (Pairing Axiom) : For any sets y and z, there is a set having
--- as members just y and z.
+-- as members just y and z. Allows to define a set which is just
+-- the pair of any two sets.
 
 -- pow (Power Set Axiom): For any x there is a set whose members are
--- exactly the subsets of x.
+-- exactly the subsets of x. Allows us to define the power set
+-- operation.
 
 -- sub (Subset Axiom, or Specification Axiom): This axiom asserts the
 -- existence of a set B whose members are exactly those sets x in y
--- such that they satisfy certain property.
+-- such that they satisfy certain property. Allows us to define
+-- many operations like cartesian products and difference of sets.
 
 -- uni (Union Axiom) : For any set x, there exists a set A whose
--- elements are exactly the members of x.
+-- elements are exactly the members of x. Allows us to define the
+-- union of two sets.
 
 -- pem (Principle of the excluded middle) : To prove some things
--- not valid in intuitionistic logic and valid in classical logic.
+-- not valid in intuitionistic logic and valid in classical logic. Taken
+-- from the Standford Encyclopedia entry on Intuitionistic Logic.
+-- (https://plato.stanford.edu/entries/logic-intuitionistic/).
 
--- The other three axioms are yet to implement.
+-- The sum axioms allow us to define the union operation
+-- over a family of sets.
 
 postulate
   empt : ∃ (λ B → ∀ x → x ∉ B)
@@ -212,36 +225,42 @@ postulate
 ∅ = proj₁ empt
 {-# ATP definition ∅ #-}
 
+-- Axiom of regularity: Axiom that have two very intuitive consequences:
+-- ∀ A (A ∉ A) and ¬ ∀ A,B (A∈B ∧ B∈A)
 postulate
   reg : (A : 𝓢) → A ≢ ∅ → ∃ (λ x → (x ∈ A ∧ ∀ y → y ∈ x → y ∉ A))
-
-cont : (A : Set) → A ∧ ¬ A → ⊥
-cont _ (x , ¬x) = ¬x x
 
 memberEq : (x y z : 𝓢) → x ∈ y ∧ y ≡ z → x ∈ z
 memberEq x y z (x₁ , x₂) = subs _ x₂ x₁
 
+-- Theorem 1, p. 21 (Suppes 1960)
 notInEmpty : ∀ x → x ∉ ∅
 notInEmpty x h  = (proj₂ _ empt) x h
 
 prop-∅ : (x A : 𝓢) → x ∈ A → A ≢ ∅
 prop-∅ x A x∈A h = notInEmpty x (subs _ h x∈A)
 
+-- Theorem 3, p. 22 (Suppes 1960)
 subsetOfItself : ∀ {x} → x ⊆ x
 subsetOfItself _ t∈x = t∈x
 
+-- Theorem 4, p. 22 (Suppes 1960)
 equalitySubset :  (x y : 𝓢) → x ⊆ y ∧ y ⊆ x → x ≡ y
 equalitySubset x y (x⊆y , y⊆x) = ext x y ((x⊆y x) , (y⊆x x))
 
+-- Theorem 6, p. 23 (Suppes 1960)
 trans-⊆ : (x y z : 𝓢) → x ⊆ y ∧ y ⊆ z → x ⊆ z
 trans-⊆ x y z (x⊆y , y⊆z) t t∈x = y⊆z t (x⊆y t t∈x)
 
+-- Theorem 7, p. 23 (Suppes 1960)
 notContainedInItself : ∀ {x} → ¬ (x ⊂ x)
 notContainedInItself (_ , x≢x) = x≢x refl
 
+-- Theorem 8, p. 23 (Suppes 1960)
 nonSymmetry-⊂ : (x y : 𝓢) (p : x ⊂ y) → ¬ (y ⊂ x)
 nonSymmetry-⊂ x y (x⊆y , x≢y) (y⊆x , _) = x≢y (equalitySubset x y (x⊆y , y⊆x))
 
+-- Theorem 10, p. 23 (Suppes 1960)
 ⊂→⊆ : ∀ {x y} → x ⊂ y → x ⊆ y
 ⊂→⊆ (x⊆y , _) z z∈x = x⊆y z z∈x
 
@@ -260,15 +279,18 @@ _∪_ : 𝓢 → 𝓢 → 𝓢
 x ∪ y = proj₁ (union x y)
 {-# ATP definition _∪_ #-}
 
+-- Theorem 20, p. 27 (Suppes 1960)
 ∪-d : (x y : 𝓢) → ∀ {z} → z ∈ x ∪ y ⇔ z ∈ x ∨ z ∈ y
 ∪-d x y = proj₂ _ (union x y)
 
+-- ∧-projections of past theorem for convenience.
 ∪-d₁ : (A B : 𝓢) → ∀ {x} → x ∈ (A ∪ B) → x ∈ A ∨ x ∈ B
 ∪-d₁ A B = ∧-proj₁ (∪-d A B)
 
 ∪-d₂ : (A B : 𝓢) → ∀ {x} → x ∈ A ∨ x ∈ B → x ∈ (A ∪ B)
 ∪-d₂ A B = ∧-proj₂ (∪-d A B)
 
+-- Theorem 21, p. 27 (Suppes 1960)
 A∪B≡B∪A : (A B : 𝓢) → A ∪ B ≡ B ∪ A
 A∪B≡B∪A A B = equalitySubset (A ∪ B) (B ∪ A) (p₁ , p₂)
   where
@@ -277,6 +299,7 @@ A∪B≡B∪A A B = equalitySubset (A ∪ B) (B ∪ A) (p₁ , p₂)
   p₂ : (x : 𝓢) → x ∈ (B ∪ A) → x ∈ (A ∪ B)
   p₂ x x₁ = ∪-d₂ A B (∨-sym _ _ (∪-d₁ B A x₁))
 
+-- Theorem 23, p. 27 (Suppes 1960)
 A∪A≡A : (A : 𝓢) → A ∪ A ≡ A
 A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   where
@@ -285,6 +308,7 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   p₂ : (x : 𝓢) → x ∈ A → x ∈ (A ∪ A)
   p₂ x x₁ = ∪-d₂ A A (inj₁ x₁)
 
+-- Theorem 25, p. 27 (Suppes 1960)
 ∪-prop : (A B : 𝓢) → A ⊆ A ∪ B
 ∪-prop A B t x = ∪-d₂ _ _ (inj₁ x)
 
@@ -298,6 +322,7 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
 ∪-prop₃ : (A B : 𝓢) → B ⊆ A ∪ B
 ∪-prop₃ A B t x = ∪-d₂ _ _ (inj₂ x)
 
+-- Theorem 27, p. 27 (Suppes 1960)
 ∪-prop₄ : (x y A : 𝓢) → x ⊆ A → y ⊆ A → x ∪ y ⊆ A
 ∪-prop₄ x y A x⊆A y⊆A t t∈x∪y = ∨-idem _ p₂
   where
@@ -312,18 +337,24 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
 _∩_ : 𝓢 → 𝓢 → 𝓢
 x ∩ y = proj₁ (sub (λ z → z ∈ y) x)
 
+-- Instantiation of the subset axiom schema needed for justifiying
+-- the operation.
 sub₂ : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ z ∈ x ∧ z ∈ y))
 sub₂ x y = sub (λ z → z ∈ y) x
 
+-- Theorem 12, p.25 (Suppes 1960)
 ∩-def : (x y : 𝓢) → ∀ {z} → z ∈ x ∩ y ⇔ z ∈ x ∧ z ∈ y
 ∩-def x y = proj₂ _ (sub₂ x y)
 
+-- Projections of ∩-def, useful for avoiding repeating this
+-- projections later.
 ∩-d₁ : (x A B : 𝓢)  → x ∈ (A ∩ B) → x ∈ A ∧ x ∈ B
 ∩-d₁ x A B = ∧-proj₁ (∩-def A B)
 
 ∩-d₂ : (x A B : 𝓢) → x ∈ A ∧ x ∈ B → x ∈ (A ∩ B)
 ∩-d₂ x A B = ∧-proj₂ (∩-def A B)
 
+-- Theorem 13, p.26 (Suppes 1960)
 ∩-sym : (A B : 𝓢) → A ∩ B ≡ B ∩ A
 ∩-sym A B = equalitySubset (A ∩ B) (B ∩ A) (p₁ , p₂)
   where
@@ -342,6 +373,7 @@ sub₂ x y = sub (λ z → z ∈ y) x
     x∈B : x ∈ B
     x∈B = ∧-proj₁ (∩-d₁ x B A x∈B∩A)
 
+-- Theorem 14, p. 26 (Suppes 1960).
 ∩-dist : (A B C : 𝓢) → (A ∩ B) ∩ C ≡ A ∩ (B ∩ C)
 ∩-dist A B C = equalitySubset ((A ∩ B) ∩ C) (A ∩ (B ∩ C)) (p₁ , p₂)
   where
@@ -380,6 +412,7 @@ sub₂ x y = sub (λ z → z ∈ y) x
       x∈B∩C : x ∈ B ∩ C
       x∈B∩C = ∧-proj₂ (∩-d₁ x _ (B ∩ C) x₁)
 
+-- Theorem 15, p. 26 (Suppes).
 ∩-itself : (A : 𝓢) → A ∩ A ≡ A
 ∩-itself A = equalitySubset (A ∩ A) A (p₁ , p₂)
   where
@@ -388,27 +421,33 @@ sub₂ x y = sub (λ z → z ∈ y) x
   p₂ : (x :  𝓢) → x ∈ A → x ∈ A ∩ A
   p₂ x x₁ = ∩-d₂ _ A A (x₁ , x₁)
 
+-- Theorem 17, p. 26 (Suppes 1960).
 A∩B⊆A : (A B : 𝓢) → A ∩ B ⊆ A
 A∩B⊆A A B _ p = ∧-proj₁ (∩-d₁ _ A _ p)
 
 -- Properties involving the difference between sets. The existence of this
 -- sets is also justified as an instance of the subset axiom schema.
 
+-- Instantiation of the subset schema that will justify the operation
+-- of difference between sets.
 sub₃ : (x y : 𝓢) → ∃ (λ B → {z : 𝓢} → (z ∈ B ⇔ z ∈ x ∧ z ∉ y))
 sub₃ x y = sub (λ z → z ∉ y) x
 
 _-_ : 𝓢 → 𝓢 → 𝓢
 x - y = proj₁ (sub₃ x y)
 
+-- Theorem 31, p.28 (Suppes 1960).
 dif-def : (x y : 𝓢) → ∀ {z} → z ∈ (x - y) ⇔ z ∈ x ∧ z ∉ y
 dif-def x y = proj₂ _ (sub₃ x y)
 
+-- Again both ∧-projections of the past theorem.
 dif-d₁ : (A B z : 𝓢) → z ∈ A - B → z ∈ A ∧ z ∉ B
 dif-d₁ A B z = ∧-proj₁ (dif-def A B)
 
 dif-d₂ : (A B z : 𝓢) → z ∈ A ∧ z ∉ B → z ∈ A - B
 dif-d₂ A B z = ∧-proj₂ (dif-def A B)
 
+-- Theorem 33, p. 29 (Suppes 1960).
 ∩- : (A B : 𝓢) → A ∩ (A - B) ≡ A - B
 ∩- A B = equalitySubset (A ∩ (A - B)) (A - B) (p₁ , p₂)
   where
@@ -432,6 +471,7 @@ x ₚ y = proj₁ (pair x y)
 pair-d : (x y : 𝓢) → ∀ {z} → z ∈ x ₚ y ⇔ (z ≡ x ∨ z ≡ y)
 pair-d x y = proj₂ _ (pair x y)
 
+-- Both ∧-projections
 pair-d₁ : (x y : 𝓢) → ∀ {z} → z ∈ x ₚ y → (z ≡ x ∨ z ≡ y)
 pair-d₁ x y = ∧-proj₁ (pair-d x y)
 
@@ -457,10 +497,6 @@ singletonp₂ x = pair-d₂ x x (inj₁ refl)
 
 singletonp₃ : (x : 𝓢) → ∀ {y} → x ≡ y → x ∈ singleton y
 singletonp₃ x x≡y = pair-d₂ _ _ (inj₁ x≡y)
-
-singletonp₄ : (x : 𝓢) → singleton x ∩ x ≡ ∅
-singletonp₄ x = {!!}
-
 
 pair-prop-helper₁ : {a b c : 𝓢} → a ≡ b ∨ a ≡ c → a ≢ b → a ≡ c
 pair-prop-helper₁ (inj₁ a≡b)  h = ⊥-elim (h a≡b)
@@ -541,6 +577,7 @@ pair-prop x y u v eq = ∨-e _ _ _ (pem (x ≡ y)) h-x≡y h-x≢y
                 ,
                 (pair-prop-helper₁ disj₁ (pair-prop-helper₂ h)))
 
+-- Theorem 45, p. 32 (Suppes 1960).
 singleton-eq : (x y : 𝓢) → singleton x ≡ singleton y → x ≡ y
 singleton-eq x y eq = sym _ _ (∧-proj₁ (∨-idem _ aux))
   where
@@ -560,12 +597,10 @@ prop-p₂ y z = equalitySubset _ _ (p₁ , p₂)
 
 -- Ordered pairs
 
--- To prove things about ordered pairs I have to prove first
--- pair-prop.
-
 _ₒ_ : 𝓢 → 𝓢 → 𝓢
 x ₒ y = singleton x ₚ (x ₚ y)
 
+-- Theorem 46, p. 32 (Suppes).
 ord-p : (x y u v : 𝓢) → x ₒ y ≡ u ₒ v → x ≡ u ∧ y ≡ v
 ord-p x y u v eq = ∨-e _ _ _ aux a→c b→c
   where
@@ -586,27 +621,30 @@ ord-p x y u v eq = ∨-e _ _ _ aux a→c b→c
 ⋃_ : 𝓢 → 𝓢
 ⋃ A = proj₁ (sum A)
 
- -- sum : (A : 𝓢) → ∃ (λ C → (x : 𝓢) → x ∈ C ⇔ ∃ (λ B → x ∈ B ∧ B ∈ A))
 ⋃-d : (A : 𝓢) → (x : 𝓢) → x ∈ ⋃ A ⇔ ∃ (λ B → (x ∈ B ∧ B ∈ A))
-⋃-d x A = {!!} -- proj₂ _ (sum A)
+⋃-d x A = {!!}
 
 -- Power sets
 
 𝓟_ : 𝓢 → 𝓢
 𝓟 x = proj₁ (pow x)
 
+-- Theorem 86, p. 47 (Suppes 1960)
 𝓟-d : (x : 𝓢) → ∀ {z} → z ∈ (𝓟 x) ⇔ z ⊆ x
 𝓟-d x = proj₂ _ (pow x)
 
+-- Both projections.
 𝓟-d₁ : (x : 𝓢) → ∀ {z} → z ∈ (𝓟 x) → z ⊆ x
 𝓟-d₁ _ = ∧-proj₁ (𝓟-d _)
 
 𝓟-d₂ : (x : 𝓢) → ∀ {z} → z ⊆ x → z ∈ (𝓟 x)
 𝓟-d₂ _ = ∧-proj₂ (𝓟-d _)
 
+-- Theorem 87, p. 47 (Suppes 1960).
 A∈𝓟A : (A : 𝓢) → A ∈ 𝓟 A
 A∈𝓟A A = 𝓟-d₂ A subsetOfItself
 
+-- Theorem 91, p. 48 (Suppes 1960).
 ⊆𝓟 : (A B : 𝓢) → A ⊆ B ⇔ 𝓟 A ⊆ 𝓟 B
 ⊆𝓟 A B = iₗ , iᵣ
   where
@@ -623,6 +661,7 @@ A∈𝓟A A = 𝓟-d₂ A subsetOfItself
     A∈𝓟B : A ∈ 𝓟 B
     A∈𝓟B = 𝓟A⊆𝓟B _ (A∈𝓟A _)
 
+-- Theorem 92, p. 48 (Suppes 1960).
 𝓟∪ : (A B : 𝓢) → (𝓟 A) ∪ (𝓟 B) ⊆ 𝓟 (A ∪ B)
 𝓟∪ A B t t∈𝓟A∪𝓟B = 𝓟-d₂ _ t⊆A∪B
   where
@@ -638,11 +677,12 @@ A∈𝓟A A = 𝓟-d₂ A subsetOfItself
 
 -- Cartesian Product. First we have to prove some things using
 -- the subset axiom in order to be able to define cartesian products.
---
 
+--Instance of the subset axiom.
 sub₄ : (A B : 𝓢) → ∃ (λ C → {z : 𝓢} → z ∈ C ⇔ z ∈ 𝓟 (𝓟 (A ∪ B)) ∧ ∃ (λ y → ∃ (λ w → (y ∈ A ∧ w ∈ B) ∧ z ≡ y ₒ w)))
 sub₄ A B = sub (λ x → ∃ (λ y → ∃ (λ z → (y ∈ A ∧ z ∈ B) ∧ x ≡ y ₒ z))) (𝓟 (𝓟 (A ∪ B)))
 
+-- Proved inside theorem 95, p. 49 (Suppes 1960)
 prop₁ : (A B x : 𝓢) → ∃ (λ y → ∃ (λ z → (y ∈ A ∧ z ∈ B) ∧ x ≡ y ₒ z)) → x ∈ 𝓟 (𝓟 (A ∪ B))
 prop₁ A B x (y , (z , ((y∈A , z∈B) , eqo))) = subs _ (sym _ _ eqo)  yₒz∈𝓟𝓟A∪B
   where
@@ -676,6 +716,7 @@ prop₁ A B x (y , (z , ((y∈A , z∈B) , eqo))) = subs _ (sym _ _ eqo)  yₒz�
 Aᵤ : 𝓢 → 𝓢 → 𝓢
 Aᵤ A B = proj₁ (sub₄ A B)
 
+-- Theorem 95, p 49 (Suppes 1960).
 pAᵤ : (A B : 𝓢) → {z : 𝓢} → z ∈ (Aᵤ A B) ⇔ z ∈ 𝓟 (𝓟 (A ∪ B)) ∧ ∃ (λ y → ∃ (λ w → (y ∈ A ∧ w ∈ B) ∧ z ≡ y ₒ w))
 pAᵤ A B = proj₂ _ (sub₄ A B)
 
@@ -685,14 +726,16 @@ crts A B  = (Aᵤ A B) , (λ w → ⇔-p₂ w (pAᵤ A B) (prop₁ A B w))
 _X_ : 𝓢 → 𝓢 → 𝓢
 A X B = proj₁ (crts A B)
 
+-- Theorem 97, p. 50 (Suppes 1960).
 crts-p : (A B x : 𝓢) → x ∈ A X B ⇔ ∃ (λ y → ∃ (λ z → (y ∈ A ∧ z ∈ B) ∧ x ≡ y ₒ z))
 crts-p A B x = proj₂ _ (crts A B) x
 
+-- Both projections
 crts-p₁ : (A B x : 𝓢) →  x ∈ A X B → ∃ (λ y → ∃ (λ z → (y ∈ A ∧ z ∈ B) ∧ x ≡ y ₒ z))
-crts-p₁ = {!!}
+crts-p₁ A B x = ∧-proj₁ (crts-p A B x)
 
 crts-p₂ : (A B x : 𝓢) → ∃ (λ y → ∃ (λ z → (y ∈ A ∧ z ∈ B) ∧ x ≡ y ₒ z)) → x ∈ A X B
-crts-p₂ = {!!}
+crts-p₂ A B x = ∧-proj₂ (crts-p A B x)
 
 crts-d₁ : (x y A B : 𝓢) → x ₒ y ∈ A X B → x ∈ A ∧ y ∈ B
 crts-d₁ x y A B h = (subs (λ w → w ∈ A) (sym _ _ eq₁) aux∈A) , subs (λ w → w ∈ B) (sym _ _ eq₂) aux₂∈B
@@ -723,8 +766,7 @@ crts-d₁ x y A B h = (subs (λ w → w ∈ A) (sym _ _ eq₁) aux∈A) , subs (
 crts-d₂ : (x y A B : 𝓢) → x ∈ A ∧ y ∈ B → x ₒ y ∈ A X B
 crts-d₂ x y A B (x∈A , y∈B) = {!!}
 
-
--- x ₒ y ∈ A X B → x ∈ A ∧ y ∈ B
+-- Theorem 102, p. 52
 dist-x : (A B C : 𝓢) → A X (B ∩ C) ≡ (A X B) ∩ (A X C)
 dist-x A B C = equalitySubset {!!} {!!} (i₃ , {!i₂!})
   where
@@ -756,6 +798,7 @@ dist-x A B C = equalitySubset {!!} {!!} (i₃ , {!i₂!})
   i₃ : (z : 𝓢) → z ∈ A X (B ∩ C) → z ∈ (A X B) ∩ (A X C)
   i₃ z = {!!}
 
+-- Theorem 105, p. 54
 A∉A : (A : 𝓢) → A ∉ A
 A∉A A h = cont _ (prop₃ , notEmpty)
   where
@@ -786,51 +829,63 @@ A∉A A h = cont _ (prop₃ , notEmpty)
 
 -- Relations
 
--- _⊆_ : 𝓢 → 𝓢 → Set
--- x ⊆ y = (t : 𝓢) → t ∈ x → t ∈ y
-
+-- Definition 1, p.57 (Suppes 1960).
 rel : 𝓢 → Set
 rel R = (x : 𝓢) → x ∈ R → ∃ (λ y → ∃ (λ z → x ≡ y ₒ z))
 
-rel₂ : 𝓢 → 𝓢 → 𝓢 → Set
-rel₂ x A y = rel A ⇔ x ₒ y ∈ A
-
-rel' : (A y z : 𝓢) → rel A → ∃ (λ B → y ₒ z ∈ A → z ₒ y ∈ B)
-rel' A y z Rₐ = {!!} , prf
-  where
-  prf : (y ₒ z) ∈ A → (z ₒ y) ∈ {!!}
-  prf h = {!!}
-
-relw : 𝓢 → 𝓢 → 𝓢 → Set
-relw x A y = rel A ⇔ x ₒ y ∈ A
-
+-- Theorem 2, p. 58 (Suppes 1960).
 rel-p : (S R : 𝓢) → rel R → S ⊆ R → rel S
 rel-p S R Rᵣ s⊆r x x∈S = Rᵣ _ x∈R
   where
   x∈R : x ∈ R
   x∈R = s⊆r x x∈S
 
+-- THeorem 3, p. 58 (Suppes 1960).
 rel-p₁ : (R S : 𝓢) → rel R → rel S → rel (R ∩ S)
 rel-p₁ R S Rᵣ Rₛ x x∈R∩S = Rᵣ x x∈R
   where
   x∈R : x ∈ R
   x∈R = ∧-proj₁ (∩-d₁ _ _ _ x∈R∩S)
 
+-- Principle of Mathematical induction.
+
 -- Axiom of infinity
 postulate
-  infty : ∃ (λ I → ∅ ∈ I ∧ ∀ x → x ∈ I → x ∪ singleton x ∈ I)
+  infinity : ∃ (λ I → ∅ ∈ I ∧ ∀ x → x ∈ I → x ∪ singleton x ∈ I)
 
-Iₙ : 𝓢
-Iₙ = proj₁ infty
+succ : 𝓢 → 𝓢
+succ x = x ∪ singleton x
 
-Iₙ-p : ∅ ∈ Iₙ ∧ ∀ x → x ∈ Iₙ → x ∪ singleton x ∈ Iₙ
-Iₙ-p = proj₂ _ infty
+-- Inductive property
+Inductive : 𝓢 → Set
+Inductive A = ∅ ∈ A ∧ ((x : 𝓢) → x ∈ A → succ x ∈ A)
 
-ind : 𝓢 → Set
-ind I = ∅ ∈ I ∧ ∀ x → x ∈ I → x ∪ singleton x ∈ I
+-- An inductive set.
+I : 𝓢
+I = proj₁ infinity
 
+formulaN : 𝓢 → Set
+formulaN x = (A : 𝓢) → Inductive A → x ∈ A
 
+fullN : ∃ (λ B → {z : 𝓢} → z ∈ B ⇔ z ∈ I ∧ formulaN z)
+fullN = sub formulaN I
 
+ℕ : 𝓢
+ℕ = proj₁ fullN
+
+x∈ℕ→x∈InductiveSet : (x : 𝓢) → x ∈ ℕ → (A : 𝓢) → Inductive A → x ∈ A
+x∈ℕ→x∈InductiveSet x h = ∧-proj₂ (∧-proj₁ (proj₂ _ fullN) h)
+
+-- PMI version from Ivorra Castillo (n.d.), Teorema 8.13.
+PMI : (A : 𝓢) → A ⊆ ℕ → ∅ ∈ A → ((n : 𝓢) → n ∈ A → succ n ∈ A) → A ≡ ℕ
+PMI A h₁ h₂ h₃ = equalitySubset A ℕ (prf₁ , prf₂)
+  where
+    prf₁ : (z : 𝓢) → z ∈ A → z ∈ ℕ
+    prf₁ z h = h₁ z h
+    inductiveA : Inductive A
+    inductiveA = h₂ , h₃
+    prf₂ : (z : 𝓢) → z ∈ ℕ → z ∈ A
+    prf₂ z h = x∈ℕ→x∈InductiveSet z h A inductiveA
 
 -- References
 --
@@ -840,3 +895,6 @@ ind I = ∅ ∈ I ∧ ∀ x → x ∈ I → x ∪ singleton x ∈ I
 --
 -- Enderton, Herbert B. (1977). Elements of Set Theory.
 -- Academic Press Inc.
+--
+-- Ivorra Castillo, Carlos (n.d.). Lógica y Teoría de
+-- Conjuntos. https://www.uv.es/ivorra/.
