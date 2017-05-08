@@ -124,6 +124,9 @@ x ≢ y = ¬ x ≡ y
 sym : (x y : 𝓢) → x ≡ y → y ≡ x
 sym x .x refl = refl
 
+trans : {x y z : 𝓢} → x ≡ y →  y ≡ z → x ≡ z
+trans refl refl = refl
+
 cong : (f :  𝓢 → 𝓢) {x y : 𝓢} → x ≡ y → f x ≡ f y
 cong f refl = refl
 
@@ -415,33 +418,53 @@ singletonp x x₁ = ∨-idem _ (pair-d₁ x x x₁)
 singletonp₂ : (x : 𝓢) → x ∈ singleton x
 singletonp₂ x = pair-d₂ x x (inj₁ refl)
 
+pair-prop-helper₁ : {a b c : 𝓢} → a ≡ b ∨ a ≡ c → a ≢ b → a ≡ c
+pair-prop-helper₁ (inj₁ a≡b)  h = ⊥-elim (h a≡b)
+pair-prop-helper₁ (inj₂ refl) _ = refl
+
+pair-prop-helper₂ : {a b : 𝓢} → a ≢ b → b ≢ a
+pair-prop-helper₂ h b≡a = h (sym _ _ b≡a)
+
+-- Theorem 44, p. 31 (Suppes, 1972).
 pair-prop : (x y u v : 𝓢) → x ₚ y ≡ u ₚ v → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
 pair-prop x y u v eq = ∨-e _ _ _ (pem (x ≡ y)) h-x≡y h-x≢y
   where
   u∈u,v : u ∈ (u ₚ v)
   u∈u,v = ∨-prop₁ (pair-d₂ u v) refl
+
   u∈x,y : u ∈ (x ₚ y)
   u∈x,y = memberEq u (u ₚ v) (x ₚ y) (u∈u,v , (sym _ _ eq))
+
   disj₁ : u ≡ x ∨ u ≡ y
   disj₁ = pair-d₁ _ _ u∈x,y
+
   v∈u,v : v ∈ (u ₚ v)
   v∈u,v = ∨-prop₂ (pair-d₂ u v) refl
+
   v∈x,y : v ∈ (x ₚ y)
   v∈x,y = memberEq v (u ₚ v) (x ₚ y) (v∈u,v , (sym _ _ eq))
+
   disj₂ : v ≡ x ∨ v ≡ y
   disj₂ = pair-d₁ _ _ v∈x,y
+
   x∈x,y : x ∈ (x ₚ y)
   x∈x,y = ∨-prop₁ (pair-d₂ x y) refl
+
   x∈u,v : x ∈ (u ₚ v)
   x∈u,v = memberEq x (x ₚ y) (u ₚ v) (x∈x,y , eq)
+
   disj₃ : x ≡ u ∨ x ≡ v
   disj₃ = pair-d₁ _ _ x∈u,v
+
   y∈x,y : y ∈ (x ₚ y)
   y∈x,y = ∨-prop₂ (pair-d₂ x y) refl
+
   y∈u,v : y ∈ (u ₚ v)
   y∈u,v = memberEq y (x ₚ y) (u ₚ v) (y∈x,y , eq)
+
   disj₄ : y ≡ u ∨ y ≡ v
   disj₄ = pair-d₁ _ _ y∈u,v
+
   h-x≡y : x ≡ y → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
   h-x≡y eq₂ = inj₁ (x≡u , v≡y)
     where
@@ -450,18 +473,34 @@ pair-prop x y u v eq = ∨-e _ _ _ (pem (x ≡ y)) h-x≡y h-x≢y
       where
       disj-aux : u ≡ x ∨ u ≡ x
       disj-aux = subs _ (sym _ _ eq₂) disj₁
+
     v≡y : v ≡ y
     v≡y = ∨-idem _ disj-aux
       where
       disj-aux : v ≡ y ∨ v ≡ y
       disj-aux = subs _ eq₂ disj₂
+
   h-x≢y : x ≢ y → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
   -- Suppes negates u ≡ x and obtains v ≡ x ∧ u ≡ y. Then
   -- he negates u ≡ y and obtains u ≡ x ∧ v ≡ y. He uses then
   -- a weird rule of logic like this:
   -- (¬ A → C ∧ D) → (¬ D → A ∧ B) → ((A ∧ B) ∨ (C ∧ D))
   -- Is that a rule of logic? I don't understand his reasoning
-  h-x≢y ¬eq = {!!}
+  h-x≢y ¬eq = ∨-e _ _ _ (pem (x ≡ u)) h₁ h₂
+    where
+    h₁ : x ≡ u → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+    h₁ x≡u = ∨-e _ _ _ (pem (y ≡ u)) h₁₁ h₁₂
+      where
+      h₁₁ : y ≡ u → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+      h₁₁ y≡u = ⊥-elim (¬eq (trans x≡u (sym _ _ y≡u)))
+
+      h₁₂ : y ≢ u → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+      h₁₂ h = inj₁ (sym _ _ x≡u , sym _ _ (pair-prop-helper₁ disj₄ h))
+
+    h₂ : x ≢ u → (u ≡ x ∧ v ≡ y) ∨ (v ≡ x ∧ u ≡ y)
+    h₂ h = inj₂ (sym _ _ (pair-prop-helper₁ disj₃ h)
+                ,
+                (pair-prop-helper₁ disj₁ (pair-prop-helper₂ h)))
 
 -- Ordered pairs
 
@@ -526,9 +565,11 @@ A X B = {!!}
 
 -- References
 --
--- Suppes, Patrick (1960). Axiomatic Set Theory.
--- The University Series in Undergraduate Mathematics.
--- D. Van Nostrand Company, inc.
+-- Enderton, Herbert B. (1977). Elements of Set Theory.  Academic
+-- Press Inc.
 --
--- Enderton, Herbert B. (1977). Elements of Set Theory.
--- Academic Press Inc.
+-- Suppes, Patrick (1960). Axiomatic Set Theory.  The University
+-- Series in Undergraduate Mathematics.  D. Van Nostrand Company, Inc.
+--
+-- Suppes, Patrick (1972). Axiomatic Set Theory.  Dover Publications,
+-- Inc.
