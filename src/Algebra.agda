@@ -36,6 +36,7 @@ A∪B≡B∪A A B = equalitySubset (A ∪ B) (B ∪ A) (p₁ , p₂)
   where
   p₁ : (x : 𝓢) → x ∈ (A ∪ B) → x ∈ (B ∪ A)
   p₁ x x₁ = ∪-d₂ B A (∨-sym _ _ (∪-d₁ A B x₁))
+
   p₂ : (x : 𝓢) → x ∈ (B ∪ A) → x ∈ (A ∪ B)
   p₂ x x₁ = ∪-d₂ A B (∨-sym _ _ (∪-d₁ B A x₁))
 
@@ -45,6 +46,7 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   where
   p₁ : (x :  𝓢) → x ∈ (A ∪ A) → x ∈ A
   p₁ x x₁ = ∨-idem _ (∪-d₁ A A x₁)
+
   p₂ : (x : 𝓢) → x ∈ A → x ∈ (A ∪ A)
   p₂ x x₁ = ∪-d₂ A A (inj₁ x₁)
 
@@ -68,6 +70,7 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
   where
   p₁ : t ∈ x ∨ t ∈ y
   p₁ = ∪-d₁ _ _ t∈x∪y
+
   p₂ : t ∈ A ∨ t ∈ A
   p₂ = ∨-prop₅ p₁ (x⊆A _) (y⊆A _)
 
@@ -100,6 +103,7 @@ sub₂ x y = sub (λ z → z ∈ y) x
     where
     x∈A : x ∈ A
     x∈A = ∧-proj₁ (∩-d₁ x A B x∈A∩B)
+
     x∈B : x ∈ B
     x∈B = ∧-proj₂ (∩-d₁ x A B x∈A∩B)
   p₂ : (x :  𝓢) → x ∈ B ∩ A → x ∈ A ∩ B
@@ -107,6 +111,7 @@ sub₂ x y = sub (λ z → z ∈ y) x
     where
     x∈A : x ∈ A
     x∈A = ∧-proj₂ (∩-d₁ x B A x∈B∩A)
+
     x∈B : x ∈ B
     x∈B = ∧-proj₁ (∩-d₁ x B A x∈B∩A)
 
@@ -122,8 +127,10 @@ sub₂ x y = sub (λ z → z ∈ y) x
       where
       x∈A∩B : x ∈ A ∩ B
       x∈A∩B = ∧-proj₁ (∩-d₁ x (A ∩ B) _ x₁)
+
       x∈B : x ∈ B
       x∈B = ∧-proj₂ (∩-d₁ x _ B x∈A∩B)
+
       x∈C : x ∈ C
       x∈C = ∧-proj₂ (∩-d₁ x _ C x₁)
     x∈A : x ∈ A
@@ -139,8 +146,10 @@ sub₂ x y = sub (λ z → z ∈ y) x
       where
       x∈A : x ∈ A
       x∈A = ∧-proj₁ (∩-d₁ x A _ x₁)
+
       x∈B∩C : x ∈ B ∩ C
       x∈B∩C = ∧-proj₂ (∩-d₁ x _ (B ∩ C) x₁)
+
       x∈B : x ∈ B
       x∈B = ∧-proj₁ (∩-d₁ x B _ x∈B∩C)
     x∈C : x ∈ C
@@ -155,6 +164,7 @@ sub₂ x y = sub (λ z → z ∈ y) x
   where
   p₁ : (x : 𝓢) → x ∈ A ∩ A → x ∈ A
   p₁ x x₁ = ∧-proj₁ (∩-d₁ _ A _ x₁)
+
   p₂ : (x :  𝓢) → x ∈ A → x ∈ A ∩ A
   p₂ x x₁ = ∩-d₂ _ A A (x₁ , x₁)
 
@@ -193,8 +203,10 @@ dif-d₂ A B z = ∧-proj₂ (dif-def A B)
     where
     x∈A : x ∈ A
     x∈A = ∧-proj₁ (∩-d₁ x A _ x∈∩-)
+
     x∈A-B : x ∈ A - B
     x∈A-B = ∧-proj₂ (∩-d₁ x _ (A - B) x∈∩-)
+
     x∉B : x ∉ B
     x∉B = ∧-proj₂ (dif-d₁ A B x x∈A-B)
   p₂ : (x : 𝓢) → x ∈ A - B → x ∈ A ∩ (A - B)
