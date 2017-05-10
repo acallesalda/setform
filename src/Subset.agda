@@ -21,6 +21,7 @@ prop₂-∅ x h₁ h₂ = cont _ (h₂ , prop-∅ _ _ aux-p)
   where
   aux : 𝓢
   aux = proj₁ h₁
+
   aux-p : aux ∈ x
   aux-p = proj₂ _ h₁
 
@@ -53,3 +54,13 @@ prop-⊆ x A B x₁ x₂ = i x₁
   where
   i : x ∈ A → x ∈ B
   i = x₂ _
+
+-- References
+--
+-- Suppes, Patrick (1960). Axiomatic Set Theory.
+-- The University Series in Undergraduate Mathematics.
+-- D. Van Nostrand Company, inc.
+--
+-- Enderton, Herbert B. (1977). Elements of Set Theory.
+-- Academic Press Inc.
+

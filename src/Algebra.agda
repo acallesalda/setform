@@ -6,6 +6,7 @@ open import ZAxioms
 
 infix 6 _∪_
 infix 6 _-_
+infix 6 _∩_
 
 -- Properties involving operations between sets, algebra of sets.
 
@@ -76,6 +77,9 @@ A∪A≡A A = equalitySubset (A ∪ A) A (p₁ , p₂)
 
 -- Properties about the intersection opertaion. Its existence is justified
 -- as an axiom derived from the sub axiom schema.
+
+_∩_ : 𝓢 → 𝓢 → 𝓢
+x ∩ y = proj₁ (sub (λ z → z ∈ y) x)
 
 -- Instantiation of the subset axiom schema needed for justifiying
 -- the operation.
@@ -211,3 +215,13 @@ dif-d₂ A B z = ∧-proj₂ (dif-def A B)
     x∉B = ∧-proj₂ (dif-d₁ A B x x∈A-B)
   p₂ : (x : 𝓢) → x ∈ A - B → x ∈ A ∩ (A - B)
   p₂ x x∈A-B = ∩-d₂ x A (A - B) ((∧-proj₁ (dif-d₁ A B x x∈A-B)) , x∈A-B)
+
+-- References
+--
+-- Suppes, Patrick (1960). Axiomatic Set Theory.
+-- The University Series in Undergraduate Mathematics.
+-- D. Van Nostrand Company, inc.
+--
+-- Enderton, Herbert B. (1977). Elements of Set Theory.
+-- Academic Press Inc.
+

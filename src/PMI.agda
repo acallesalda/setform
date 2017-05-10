@@ -41,12 +41,14 @@ x∈ℕ→x∈InductiveSet x h = ∧-proj₂ (∧-proj₁ (proj₂ _ fullN) h)
 PMI : (A : 𝓢) → A ⊆ ℕ → ∅ ∈ A → ((n : 𝓢) → n ∈ A → succ n ∈ A) → A ≡ ℕ
 PMI A h₁ h₂ h₃ = equalitySubset A ℕ (prf₁ , prf₂)
   where
-    prf₁ : (z : 𝓢) → z ∈ A → z ∈ ℕ
-    prf₁ z h = h₁ z h
-    inductiveA : Inductive A
-    inductiveA = h₂ , h₃
-    prf₂ : (z : 𝓢) → z ∈ ℕ → z ∈ A
-    prf₂ z h = x∈ℕ→x∈InductiveSet z h A inductiveA
+  prf₁ : (z : 𝓢) → z ∈ A → z ∈ ℕ
+  prf₁ z h = h₁ z h
+
+  inductiveA : Inductive A
+  inductiveA = h₂ , h₃
+
+  prf₂ : (z : 𝓢) → z ∈ ℕ → z ∈ A
+  prf₂ z h = x∈ℕ→x∈InductiveSet z h A inductiveA
 
 -- References
 --

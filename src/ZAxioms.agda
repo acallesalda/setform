@@ -2,7 +2,6 @@
 -- Formalisation of the Z axioms of set theory.
 -------------------------------------------------
 infix 1 ∃
-infix 6 _∩_
 infix 5 _⊆_
 infix 5 _∈_ _∉_
 infix 4 _≡_
@@ -56,7 +55,7 @@ trans refl refl = refl
 
 -- Property concerning bi-implication, needed in a proof.
 ⇔-p₂ : (z : 𝓢) → {A B C : Set} →  A ⇔ (B ∧ C) → (C → B) → A ⇔ C
-⇔-p₂ z (a→b∧c , b∧c→a) c→b = (λ a → ∧-proj₂ (a→b∧c a)) , (λ c → b∧c→a ((c→b c) , c))
+⇔-p₂ z (h₁ , h₂) h₃ = (λ a → ∧-proj₂ (h₁ a)) , (λ c → h₂ ((h₃ c) , c))
 
 -- Definitions of subset and not-membership.
 
@@ -130,13 +129,17 @@ postulate
 ∅ = proj₁ empt
 {-# ATP definition ∅ #-}
 
--- Intersection. Need to be included here to formalize
--- the axiom of regularity.
-
-_∩_ : 𝓢 → 𝓢 → 𝓢
-x ∩ y = proj₁ (sub (λ z → z ∈ y) x)
-
 -- Axiom of regularity: Axiom that have two very intuitive consequences:
--- ∀ A (A ∉ A) and ¬ ∀ A,B (A∈B ∧ B∈A)
+-- ∀ A (A ∉ A) and ¬ ∀ A,B (A∈B ∧ B∈A). From Suppes, p. 56 (1960).
 postulate
   reg : (A : 𝓢) → A ≢ ∅ → ∃ (λ x → x ∈ A ∧ ∀ y → y ∈ x → y ∉ A)
+
+-- References
+--
+-- Suppes, Patrick (1960). Axiomatic Set Theory.
+-- The University Series in Undergraduate Mathematics.
+-- D. Van Nostrand Company, inc.
+--
+-- Enderton, Herbert B. (1977). Elements of Set Theory.
+-- Academic Press Inc.
+

@@ -72,6 +72,7 @@ A ⇔ B = (A → B) ∧ (B → A)
   where
   prf₁ : A → C
   prf₁ A = ∧-proj₂ (h₁ A)
+
   prf₂ : C → A
   prf₂ C = h₂ ((h₃ C) , C)
 

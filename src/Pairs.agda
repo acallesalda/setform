@@ -35,6 +35,7 @@ pair-p₁ x y = equalitySubset (x ₚ y) (y ₚ x) (p₁ , p₂)
   where
   p₁ : (z : 𝓢) → z ∈ x ₚ y → z ∈ y ₚ x
   p₁ z z∈x,y = pair-d₂ y x (∨-sym _ _ (pair-d₁ x y z∈x,y))
+
   p₂ : (z : 𝓢) → z ∈ y ₚ x → z ∈ x ₚ y
   p₂ z z∈y,x = pair-d₂ x y (∨-sym _ _ (pair-d₁ y x z∈y,x))
 
@@ -55,6 +56,7 @@ singletonp₄ x y h = {!!}
   where
   p₁ : x ≡ y
   p₁ = singletonp _ h
+
   p₂ : x ∩ singleton x ≡ ∅
   p₂ = {!!}
 
@@ -152,6 +154,7 @@ prop-p₂ y z = equalitySubset _ _ (p₁ , p₂)
   where
   p₁ : (x : 𝓢) → x ∈ y ₚ z → x ∈ singleton y ∪ singleton z
   p₁ _ h = ∪-d₂ _ _ (∨-prop₅ (pair-d₁ _ _ h) (singletonp₃ _) (singletonp₃ _))
+
   p₂ : (x : 𝓢) → x ∈ singleton y ∪ singleton z → x ∈ y ₚ z
   p₂ x h = pair-d₂ _ _ (∨-prop₅ (∪-d₁ _ _ h) (singletonp _) (singletonp _))
 
@@ -170,11 +173,13 @@ ord-p x y u v eq = ∨-e _ _ _ aux a→c b→c
   where
   aux : abv₁ u x v y
   aux = pair-prop _ _ _ _ eq
+
   a→c : singleton u ≡ singleton x ∧ u ₚ v ≡ x ₚ y → x ≡ u ∧ y ≡ v
   a→c (eqₚ , eqₛ) = x≡u , y≡v
     where
     x≡u : x ≡ u
     x≡u = singleton-eq _ _ (sym _ _ eqₚ)
+
     y≡v : y ≡ v
     y≡v = {!!}
   b→c : u ₚ v ≡ singleton x ∧ singleton u ≡ x ₚ y → x ≡ u ∧ y ≡ v
@@ -209,6 +214,7 @@ A∈𝓟A A = 𝓟-d₂ A subsetOfItself
     where
      t⊆A : t ⊆ A
      t⊆A = 𝓟-d₁ A t∈𝓟A
+
      t⊆B : t ⊆ B
      t⊆B = trans-⊆ _ _ _ (t⊆A , A⊆B)
   iᵣ : 𝓟 A ⊆ 𝓟 B → A ⊆ B
@@ -223,6 +229,7 @@ A∈𝓟A A = 𝓟-d₂ A subsetOfItself
   where
   ∪₁ : t ∈ 𝓟 A ∨ t ∈ 𝓟 B
   ∪₁ = ∪-d₁ _ _ t∈𝓟A∪𝓟B
+
   p : t ⊆ A ∨ t ⊆ B
   p = ∨-prop₄ aux₁ (𝓟-d₁ _)
     where
@@ -252,12 +259,16 @@ prop₁ A B x (y , (z , ((y∈A , z∈B) , eqo))) = subs _ (sym _ _ eqo)  yₒz�
   where
   yₛ⊆A : singleton y ⊆ A
   yₛ⊆A = singleton-⊆ _ _ y∈A
+
   yₛ⊆A∪B : singleton y ⊆ A ∪ B
   yₛ⊆A∪B t t∈yₛ = trans-⊆ _ _ _ (yₛ⊆A , (∪-prop _ _)) _ t∈yₛ
+
   zₛ⊆B : singleton z ⊆ B
   zₛ⊆B = singleton-⊆ _ _ z∈B
+
   zₛ⊆A∪B : singleton z ⊆ A ∪ B
   zₛ⊆A∪B t t∈zₛ = trans-⊆ _ _ _ (zₛ⊆B , ∪-prop₃ _ _) _ t∈zₛ
+
   y,z⊆A∪B : y ₚ z ⊆ A ∪ B
   y,z⊆A∪B t t∈y,z = ∪-prop₄ _ _ _ yₛ⊆A∪B zₛ⊆A∪B _ p
     where
@@ -265,13 +276,16 @@ prop₁ A B x (y , (z , ((y∈A , z∈B) , eqo))) = subs _ (sym _ _ eqo)  yₒz�
     p = subs (λ w → t ∈ w) (prop-p₂ y z) t∈y,z
   yₛ∈𝓟A∪B : singleton y ∈ 𝓟 (A ∪ B)
   yₛ∈𝓟A∪B = 𝓟-d₂ _ yₛ⊆A∪B
+
   y,z∈𝓟A∪B : y ₚ z ∈ 𝓟 (A ∪ B)
   y,z∈𝓟A∪B = 𝓟-d₂ _ y,z⊆A∪B
+
   yₒz⊆𝓟A∪B : y ₒ z ⊆ 𝓟 (A ∪ B)
   yₒz⊆𝓟A∪B t t∈o = ∨-e _ _ _ (pair-d₁ _ _ t∈o) i₁ i₂
     where
     i₁ : t ≡ singleton y → t ∈ 𝓟 (A ∪ B)
     i₁ eq = subs _ (sym t (singleton y) eq) yₛ∈𝓟A∪B
+
     i₂ : t ≡ y ₚ z → t ∈ 𝓟 (A ∪ B)
     i₂ eq = subs _ (sym t (y ₚ z) eq) y,z∈𝓟A∪B
   yₒz∈𝓟𝓟A∪B : y ₒ z ∈ 𝓟 (𝓟 (A ∪ B))
@@ -306,26 +320,44 @@ crts-d₁ x y A B h = (subs (λ w → w ∈ A) (sym _ _ eq₁) aux∈A)
                          ,
                          subs (λ w → w ∈ B) (sym _ _ eq₂) aux₂∈B
   where
-    foo : ∃ (λ z → ∃ (λ w → (z ∈ A ∧ w ∈ B) ∧ (x ₒ y) ≡ (z ₒ w)))
-    foo = crts-p₁ A B (x ₒ y) h
-    aux : 𝓢
-    aux = proj₁ foo
-    aux-p : ∃ (λ w → (aux ∈ A ∧ w ∈ B) ∧ (x ₒ y) ≡ (aux ₒ w))
-    aux-p = proj₂ _ foo
-    aux₂ : 𝓢
-    aux₂ = proj₁ aux-p
-    aux₂-p : (aux ∈ A ∧ aux₂ ∈ B) ∧ (x ₒ y) ≡ (aux ₒ aux₂)
-    aux₂-p = proj₂ _ aux-p
-    aux∈A : aux ∈ A
-    aux∈A = ∧-proj₁ (∧-proj₁ aux₂-p)
-    aux₂∈B : aux₂ ∈ B
-    aux₂∈B = ∧-proj₂ (∧-proj₁ aux₂-p)
-    eq : x ₒ y ≡ aux ₒ aux₂
-    eq = ∧-proj₂ aux₂-p
-    eqs : x ≡ aux ∧ y ≡ aux₂
-    eqs = ord-p _ _ _ _ eq
-    eq₁ : x ≡ aux
-    eq₁ = ∧-proj₁ eqs
-    eq₂ : y ≡ aux₂
-    eq₂ = ∧-proj₂ eqs
+  foo : ∃ (λ z → ∃ (λ w → (z ∈ A ∧ w ∈ B) ∧ (x ₒ y) ≡ (z ₒ w)))
+  foo = crts-p₁ A B (x ₒ y) h
 
+  aux : 𝓢
+  aux = proj₁ foo
+
+  aux-p : ∃ (λ w → (aux ∈ A ∧ w ∈ B) ∧ (x ₒ y) ≡ (aux ₒ w))
+  aux-p = proj₂ _ foo
+
+  aux₂ : 𝓢
+  aux₂ = proj₁ aux-p
+
+  aux₂-p : (aux ∈ A ∧ aux₂ ∈ B) ∧ (x ₒ y) ≡ (aux ₒ aux₂)
+  aux₂-p = proj₂ _ aux-p
+
+  aux∈A : aux ∈ A
+  aux∈A = ∧-proj₁ (∧-proj₁ aux₂-p)
+
+  aux₂∈B : aux₂ ∈ B
+  aux₂∈B = ∧-proj₂ (∧-proj₁ aux₂-p)
+
+  eq : x ₒ y ≡ aux ₒ aux₂
+  eq = ∧-proj₂ aux₂-p
+
+  eqs : x ≡ aux ∧ y ≡ aux₂
+  eqs = ord-p _ _ _ _ eq
+
+  eq₁ : x ≡ aux
+  eq₁ = ∧-proj₁ eqs
+
+  eq₂ : y ≡ aux₂
+  eq₂ = ∧-proj₂ eqs
+
+-- References
+--
+-- Suppes, Patrick (1960). Axiomatic Set Theory.
+-- The University Series in Undergraduate Mathematics.
+-- D. Van Nostrand Company, inc.
+--
+-- Enderton, Herbert B. (1977). Elements of Set Theory.
+-- Academic Press Inc.
