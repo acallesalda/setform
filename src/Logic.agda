@@ -62,6 +62,10 @@ trivial _ A = A
 ∨-prop₅ (inj₁ a) a→c b→d = inj₁ (a→c a)
 ∨-prop₅ (inj₂ b) a→c b→d = inj₂ (b→d b)
 
+∨-∧ : {A B : Set} → (A ∧ B) ∨ (B ∧ A) → A ∧ B
+∨-∧ (inj₁ (a , b)) = a , b
+∨-∧ (inj₂ (b , a)) = a , b
+
 -- Bi-implication.
 
 _⇔_ : Set → Set → Set

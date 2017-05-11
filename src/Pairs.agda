@@ -171,7 +171,8 @@ abv₁ u x v y = (u ₚ u ≡ x ₚ x ∧ u ₚ v ≡ x ₚ y) ∨ (u ₚ v ≡ 
 ord-p : (x y u v : 𝓢) → x ₒ y ≡ u ₒ v → x ≡ u ∧ y ≡ v
 ord-p x y u v eq = ∨-e _ _ _ aux a→c b→c
   where
-  aux : abv₁ u x v y
+  aux : (singleton u ≡ singleton x ∧ (u ₚ v) ≡ (x ₚ y)) ∨
+          ((u ₚ v) ≡ singleton x ∧ singleton u ≡ (x ₚ y))
   aux = pair-prop _ _ _ _ eq
 
   a→c : singleton u ≡ singleton x ∧ u ₚ v ≡ x ₚ y → x ≡ u ∧ y ≡ v
@@ -180,10 +181,46 @@ ord-p x y u v eq = ∨-e _ _ _ aux a→c b→c
     x≡u : x ≡ u
     x≡u = singleton-eq _ _ (sym _ _ eqₚ)
 
+    p₁ : (x ≡ u ∧ y ≡ v) ∨ (y ≡ u ∧ x ≡ v)
+    p₁ = pair-prop _ _ _ _ eqₛ
+
+    p₂ : x ≡ u ∧ y ≡ v → y ≡ v
+    p₂ (h₁ , h₂) = h₂
+
+    p₃ : y ≡ u ∧ x ≡ v → y ≡ v
+    p₃ (h₁ , h₂) = subs (λ w → w ≡ v) x≡y h₂
+      where
+      x≡y : x ≡ y
+      x≡y = subs (λ w → x ≡ w) (sym y u h₁) x≡u
+
     y≡v : y ≡ v
-    y≡v = {!!}
+    y≡v = ∨-e _ _ _ p₁ p₂ p₃
   b→c : u ₚ v ≡ singleton x ∧ singleton u ≡ x ₚ y → x ≡ u ∧ y ≡ v
-  b→c x₁ = {!!}
+  b→c (h₁ , h₂) = p₃ , subs (λ w → w ≡ v) p₈ p₄
+    where
+    p₁ : (x ≡ u ∧ x ≡ v) ∨ (x ≡ u ∧ x ≡ v)
+    p₁ = pair-prop _ _ _ _ h₁
+
+    p₂ : x ≡ u ∧ x ≡ v
+    p₂ = ∨-idem _ p₁
+
+    p₃ : x ≡ u
+    p₃ = ∧-proj₁ p₂
+
+    p₄ : x ≡ v
+    p₄ = ∧-proj₂ p₂
+
+    p₅ : (x ≡ u ∧ y ≡ u) ∨ (y ≡ u ∧ x ≡ u)
+    p₅ = pair-prop _ _ _ _ h₂
+
+    p₆ : x ≡ u ∧ y ≡ u
+    p₆ = ∨-∧ p₅
+
+    p₇ : y ≡ u
+    p₇ = ∧-proj₂ p₆
+
+    p₈ : x ≡ y
+    p₈ = subs (λ w → w ≡ y) (sym _ _ p₃) (sym _ _ p₇)
 
 -- Power sets
 
